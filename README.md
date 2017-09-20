@@ -1,6 +1,6 @@
-# Project Title
+# Rare Disease Process Pipeline
 
-One Paragraph of project description goes here
+This pipeline processes the rare-disease rna-seq sample starting with fastq files. The fastq files are mapped with rail-rna to hg19, and junction count matrices are produced.
 
 ## Getting Started
 
