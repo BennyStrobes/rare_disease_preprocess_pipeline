@@ -6,9 +6,13 @@ This pipeline preprocesses the rare-disease rna-seq sample starting with fastq f
 
 To do
 
+## Computer cluster
+
+This pipeline was designed to run on the DURGA cluster
+
 ### Prerequisites
 
-Need to install [rail-rna](http://rail.bio/)
+Need to have [rail-rna](http://rail.bio/) installed.
 
 ## Authors
 
