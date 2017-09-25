@@ -19,7 +19,7 @@ bowtie2_prefix="/mnt/lab_data/montgomery/shared/genomes/Homo_sapiens/UCSC/hg19/S
 # Absolute location of file created in gtex outlier splicing analysis on hhpc.
 # Path to file on hhpc was: /scratch1/battle-fs1/bstrober/rare_variants/rare_splice/cluster_level/standard_outlier_calling/outlier_calling/clusters_filter/Whole_Blood_Analysis_hg19_filtered_xt_reclustered_gene_mapped.txt
 # We are going to basically add columns (samples to this file). Without adding /deleting junctions
-gtex_whole_blood_jxn_file="/srv/scratch/bstrobe1/rare_variant/input_data/Whole_Blood_Analysis_hg19_filtered_xt_reclustered_gene_mapped.txt"
+gtex_whole_blood_jxn_file="/srv/scratch/bstrobe1/rare_variant/input_data/Whole_Blood_Analysis_hg19_filtered_xt_reclustered_gene_mapped2.txt"
 
 
 
