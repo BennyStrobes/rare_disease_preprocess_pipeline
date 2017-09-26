@@ -48,6 +48,9 @@ rail_rna_log_dir="/srv/scratch/bstrobe1/rare_variant/rare_disease/preprocess/rai
 # Directory containing processed junction matrices
 junctions_dir="/srv/scratch/bstrobe1/rare_variant/rare_disease/preprocess/junctions/"
 
+# Directory containing outlier calling results
+outlier_calling_dir="/srv/scratch/bstrobe1/rare_variant/rare_disease/preprocess/outlier_calling/"
+
 
 
 ##########################################################################
@@ -65,6 +68,10 @@ gtex_rare_combined_jxn_file=$junctions_dir"gtex_rare_combined_junctions.txt"
 # File that contains the junction matrix (Junctions X Samples) for only the rare disease samples
 # Created by 'python append_samples_to_junction_file.py'
 rare_only_jxn_file=$junctions_dir"rare_only_junctions.txt"
+
+# File that contains outlier calling p-values (Clusters X samples)
+# Created by outlier_calling_dm.py.
+
 
 
 
@@ -114,7 +121,40 @@ fi
 # Create two output files using same junctions as found in $gtex_whole_blood_junction_file:
 #     1. Containing both gtex whole blood samples and rare disease samples
 #     2. Only rare disease samples
+if false; then
 python append_samples_to_junction_file.py $gtex_whole_blood_jxn_file $sample_fastq_pairing_file $rail_rna_dir $gtex_rare_combined_jxn_file $rare_only_jxn_file
+fi
 
+###############
+# Run dirichlet multinomial outlier calling on our junction matrices
+# Junction matrices from combined whole blood gtex and rare-cohort (cgs) 
+max_dm_junctions="20"
+jxn_filter_method="ignore_genes"
+node_number="0"
+total_nodes="10"
+covariate_regression_method="none"
+min_reads_per_individual="5"
+min_individuals_per_gene="50"
 
+if false; then 
+for node_number in $(seq 0 `expr $total_nodes - "1"`); do
+    nohup python3 call_outlier_dm.py $gtex_rare_combined_jxn_file $outlier_calling_dir"gtex_rare_combined_" $max_dm_junctions $jxn_filter_method $node_number $total_nodes $covariate_regression_method $min_reads_per_individual $min_individuals_per_gene &> log$node_number &
+done
+fi
 
+###############
+# Run dirichlet multinomial outlier calling on our junction matrices
+# Junction matrices from rare-cohort (cgs) only
+max_dm_junctions="20"
+jxn_filter_method="ignore_genes"
+node_number="0"
+total_nodes="10"
+covariate_regression_method="none"
+min_reads_per_individual="5"
+min_individuals_per_gene="30"
+
+if false; then
+for node_number in $(seq 0 `expr $total_nodes - "1"`); do
+    nohup python3 call_outlier_dm.py $rare_only_jxn_file $outlier_calling_dir"rare_only_" $max_dm_junctions $jxn_filter_method $node_number $total_nodes $covariate_regression_method $min_reads_per_individual $min_individuals_per_gene &> log_rare_only_$node_number &
+done
+fi
