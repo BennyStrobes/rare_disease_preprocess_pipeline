@@ -20,6 +20,16 @@ def get_ordered_list_of_rare_disease_samples(sample_fastq_pairing_file):
         ordered_list.append(data[0])
     return ordered_list
 
+# Get ordered list of the rare disease samples
+def get_ordered_list_of_sra_samples(sra_jxn_file):
+    # Header of sra_jxn_file contains sample names
+    f = gzip.open(sra_jxn_file)
+    for line in f:
+        line = line.rstrip()
+        data = line.split()
+        samples = np.asarray(data[1:])
+        return samples
+
 # Create a dictionary that maps from junction name (chromNum_startPos_endPos) to the line number at which that junction occurs in gtex_whole_blood_jxn_file
 def create_dictionary_that_maps_from_junction_id_to_line_number(gtex_whole_blood_jxn_file):
     f = open(gtex_whole_blood_jxn_file)
@@ -84,6 +94,28 @@ def print_gtex_rare_combined_jxn_matrix(gtex_whole_blood_jxn_file, rare_disease_
     f.close()
     t.close()
 
+def print_sra_gtex_rare_combined_jxn_matrix(gtex_whole_blood_jxn_file, rare_disease_jxn_mat, sra_jxn_mat, sra_gtex_rare_combined_jxn_file, rare_disease_samples, sra_samples):
+    rare_disease_jxn_mat = rare_disease_jxn_mat.astype(int)  # Convert junction mat to integers because we are working with count data
+    sra_jxn_mat = sra_jxn_mat.astype(int)
+    t = open(sra_gtex_rare_combined_jxn_file, 'w') # Initialize handle to output file
+    f = open(gtex_whole_blood_jxn_file)
+    head_count = 0  # Used to identify header
+    line_counter = 0  # used to keep track what line we are at
+    #  Loop through gtex whole blood junction matrix file
+    for line in f:
+        line = line.rstrip()
+        data = line.split()
+        if head_count == 0:  # Header
+            head_count = head_count + 1
+            t.write(line + '\t' + '\t'.join(sra_samples) + '\t' + '\t'.join(rare_disease_samples) + '\n')  # Write new header
+            continue
+        rare_counts = rare_disease_jxn_mat[line_counter,:].astype(str)  # Convert counts for the rare disease samples to strings
+        sra_counts = sra_jxn_mat[line_counter,:].astype(str)
+        t.write(line + '\t' + '\t'.join(sra_counts) + '\t' + '\t'.join(rare_counts) + '\n')  # Write new line
+        line_counter = line_counter + 1
+    f.close()
+    t.close()
+
 # Print appended junction matrix.
 def print_rare_only_jxn_matrix(gtex_whole_blood_jxn_file, rare_disease_jxn_mat, rare_only_jxn_file, rare_disease_samples):
     rare_disease_jxn_mat = rare_disease_jxn_mat.astype(int)  # Convert junction mat to integers because we are working with count data
@@ -105,11 +137,32 @@ def print_rare_only_jxn_matrix(gtex_whole_blood_jxn_file, rare_disease_jxn_mat, 
     f.close()
     t.close()
 
+# For sra samples, fill in how many reads overlap the junctions
+def fill_in_sra_jxn_mat(sra_jxn_mat, jxn_id_to_line_number, sra_whole_blood_jxn_file):
+    f = gzip.open(sra_whole_blood_jxn_file)
+    head_count = 0  # for header
+    for line in f:
+        line = line.rstrip()
+        data = line.split()
+        if head_count == 0:  # Skip header
+            head_count = head_count + 1
+            continue
+        jxn_id = data[0]
+        if jxn_id not in jxn_id_to_line_number:
+            print('ERROR in sra jxn mat')
+            pdb.set_trace()
+        line_number = jxn_id_to_line_number[jxn_id]
+        counts = np.asarray(data[1:]).astype(int)
+        sra_jxn_mat[line_number,:] = counts
+    return sra_jxn_mat
 
 # Main driver scripts for this analysis
-def driver(gtex_whole_blood_jxn_file, sample_fastq_pairing_file, rail_rna_dir, gtex_rare_combined_jxn_file, rare_only_jxn_file):
+def driver(gtex_whole_blood_jxn_file, sra_whole_blood_jxn_file, sample_fastq_pairing_file, rail_rna_dir, gtex_rare_combined_jxn_file, rare_only_jxn_file, sra_gtex_rare_combined_jxn_file):
     # Get ordered list of the rare disease samples
     rare_disease_samples = get_ordered_list_of_rare_disease_samples(sample_fastq_pairing_file)
+
+    # Get ordered list of the sra samples
+    sra_samples = get_ordered_list_of_sra_samples(sra_whole_blood_jxn_file)
 
     # Create a dictionary that maps from junction name (chromNum_startPos_endPos) to the line number at which that junction occurs in gtex_whole_blood_jxn_file
     # Also learn number of lines (junctions) in junction matrix
@@ -117,6 +170,13 @@ def driver(gtex_whole_blood_jxn_file, sample_fastq_pairing_file, rail_rna_dir, g
 
     # Initialize junction matrix for rare disease samples (numJxns X numSamples)
     rare_disease_jxn_mat = np.zeros((num_lines,len(rare_disease_samples)))
+
+
+    # Initialize junction matrix for sra samples (numJxns X numSamples)
+    sra_jxn_mat = np.zeros((num_lines,len(sra_samples)))
+
+    # For sra samples, fill in how many reads overlap the junctions
+    sra_jxn_mat = fill_in_sra_jxn_mat(sra_jxn_mat, jxn_id_to_line_number, sra_whole_blood_jxn_file)
 
     # Loop through each of rare_disease_samples and fill in rare_disease_jxn_mat
     for sample_num, rare_disease_sample in enumerate(rare_disease_samples):
@@ -128,6 +188,8 @@ def driver(gtex_whole_blood_jxn_file, sample_fastq_pairing_file, rail_rna_dir, g
     # Print appended junction matrices
     print_gtex_rare_combined_jxn_matrix(gtex_whole_blood_jxn_file, rare_disease_jxn_mat, gtex_rare_combined_jxn_file, rare_disease_samples)
     print_rare_only_jxn_matrix(gtex_whole_blood_jxn_file, rare_disease_jxn_mat, rare_only_jxn_file, rare_disease_samples)
+    print_sra_gtex_rare_combined_jxn_matrix(gtex_whole_blood_jxn_file, rare_disease_jxn_mat, sra_jxn_mat, sra_gtex_rare_combined_jxn_file, rare_disease_samples, sra_samples)
+
 
 ##################################################
 # Input data
@@ -135,8 +197,9 @@ def driver(gtex_whole_blood_jxn_file, sample_fastq_pairing_file, rail_rna_dir, g
 gtex_whole_blood_jxn_file = sys.argv[1]  # This is an input file that contains junction matrix for gtex whole blood samples
 sample_fastq_pairing_file = sys.argv[2]  # Input file containing all sample ids
 rail_rna_dir = sys.argv[3]  # Input directory containing results of running rail-rna
-gtex_rare_combined_jxn_file = sys.argv[4]  # Output file path. File is a junction matrix containing samples from both gtex whole blood and the rare disease samples
-rare_only_jxn_file = sys.argv[5]  # Output file path. File is a junction matrix containing samples from both gtex whole blood and the rare disease samples
+sra_whole_blood_jxn_file = sys.argv[4]  # Input file containing junction matrix for sra whole blood samples
+gtex_rare_combined_jxn_file = sys.argv[5]  # Output file path. File is a junction matrix containing samples from both gtex whole blood and the rare disease samples
+rare_only_jxn_file = sys.argv[6]  # Output file path. File is a junction matrix containing samples from both gtex whole blood and the rare disease samples
+sra_gtex_rare_combined_jxn_file = sys.argv[7]  # Output file path. File a junction matrix containing samples from sra, gtex whole blood and the rare disease samples
 
-
-driver(gtex_whole_blood_jxn_file, sample_fastq_pairing_file, rail_rna_dir, gtex_rare_combined_jxn_file, rare_only_jxn_file)
+driver(gtex_whole_blood_jxn_file, sra_whole_blood_jxn_file, sample_fastq_pairing_file, rail_rna_dir, gtex_rare_combined_jxn_file, rare_only_jxn_file,sra_gtex_rare_combined_jxn_file)

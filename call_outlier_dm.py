@@ -856,9 +856,6 @@ def call_outliers_with_dirichlet_multinomial(outlier_file_root, gene_jxn_data_st
     start_time = time.time()
 
     for counter,gene in enumerate(gene_jxn_data_structure.keys()):
-        #Parrallelization Stuff
-        if counter < start_number or counter > end_number:
-            continue
         ####################################################################
         #time related stuff
         ####################################################################
@@ -935,6 +932,13 @@ def call_outliers(jxn_file, outlier_file_root, max_dm_junctions, jxn_filter_meth
     
     #For parallelization purposes 
     start_number,end_number = parallelization_start_and_end(len(gene_jxn_data_structure),node_number,total_nodes)
+    # Remove genes that are not in this parrallelization run
+    genes_to_remove = []
+    for counter, gene in enumerate(gene_jxn_data_structure.keys()):
+        if counter < start_number or counter > end_number:
+            genes_to_remove.append(gene)
+    for gene in genes_to_remove:
+        gene_jxn_data_structure.pop(gene,None)
     #call outliers for each gene using a fitted dirichlet multinomial
     #Also write to output
     call_outliers_with_dirichlet_multinomial(outlier_file_root + '_' + str(node_number) + '_' + str(total_nodes), gene_jxn_data_structure, all_samples, start_number, end_number)

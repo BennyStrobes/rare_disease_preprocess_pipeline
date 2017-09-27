@@ -10,6 +10,22 @@ import pdb
 fastq_directory = sys.argv[1]  # Directory containing all of the fastq files (2 per sample)
 sample_fastq_pairing_output_file = sys.argv[2]  # Output file
 sample_info_dir = sys.argv[3] # Directory to contain each of manifest files
+sample_names_conversion_file = sys.argv[4] #File that contains conversion from sample names (column 1) to instituition ids (column 2; used in vcf files) to case control status (column 3)
+sample_info_pairing_file = sys.argv[5]  # output file for convresion from sample id to institution id
+sample_info_pairing_gs_only_file = sys.argv[6] # output file for conversion from sample id to institution id. Excepted limited to samples that have WGS
+
+sample_to_institution_id = {} # provides conversion from sample name to institution id
+sample_to_case_control = {}  # provides conversion from sample name to case/control status
+# Learn conversion from sample id to institution id & case/control status
+f = open(sample_names_conversion_file)
+for line in f:
+    line = line.rstrip()
+    data = line.split()
+    sample_id = data[0]
+    institution_id = data[1]
+    case_control = data[2]
+    sample_to_institution_id[sample_id] = institution_id
+    sample_to_case_control[sample_id] = case_control
 
 # Initialize dictionary that will provide mapping from sample_name to fastq files
 sample_names = {}
@@ -49,8 +65,27 @@ for sample_name in sorted(sample_names.keys()):
             t.write('\t' + filer + '\n')
             t_manifest.write(filer + '\t0\t')
 
+
     t_manifest.write(sample_name + '\n')
     t_manifest.close()
 
 t.close()
+
+# Print conversion from sample id to institution id & case/control status
+f = open(sample_fastq_pairing_output_file)
+t = open(sample_info_pairing_file,'w')
+t2 = open(sample_info_pairing_gs_only_file, 'w')
+for line in f:
+    line = line.rstrip()
+    data = line.split()
+    sample_name = data[0]
+    t.write(sample_name + '\t' + sample_to_institution_id[sample_name] + '\t' + sample_to_case_control[sample_name] + '\n')
+    if sample_to_institution_id[sample_name].startswith('CGS'):  # Check to see if we have WGS for this sample
+        t2.write(sample_name + '\t' + sample_to_institution_id[sample_name] + '\t' + sample_to_case_control[sample_name] + '\n')
+t.close()
+
+
 print('Done with learning mapping from sample to fastq files')
+
+
+
