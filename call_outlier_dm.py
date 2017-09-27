@@ -934,7 +934,7 @@ def call_outliers(jxn_file, outlier_file_root, max_dm_junctions, jxn_filter_meth
     start_number,end_number = parallelization_start_and_end(len(gene_jxn_data_structure),node_number,total_nodes)
     # Remove genes that are not in this parrallelization run
     genes_to_remove = []
-    for counter, gene in enumerate(gene_jxn_data_structure.keys()):
+    for counter, gene in enumerate(sorted(gene_jxn_data_structure.keys())):
         if counter < start_number or counter > end_number:
             genes_to_remove.append(gene)
     for gene in genes_to_remove:

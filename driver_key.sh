@@ -31,6 +31,11 @@ sra_whole_blood_jxn_file="/srv/scratch/bstrobe1/rare_variant/input_data/Whole_Bl
 # Absolute location of directory containing vcf file for a subset of our CGS samples (missing later 18)
 cgs_vcf_input_dir="/mnt/lab_data/montgomery/lfresard/CGS_vcf_temp/"
 
+# pLI score file (provided by Laure)
+pli_score_file="/mnt/lab_data/montgomery/shared/ExAC/release0.3/functional_gene_constraint/forweb_cleaned_exac_r03_march16_z_data_pLI.txt"
+
+# Gencoge v19 gene annotation file
+gencode_gene_annotation_file="/srv/scratch/bstrobe1/rare_variant/input_data/gencoge_v19_gene_annotation.gtf"
 
 
 
@@ -62,6 +67,9 @@ outlier_calling_dir="/srv/scratch/bstrobe1/rare_variant/rare_disease/preprocess/
 
 # Directory containing variant call information
 variant_calling_dir="/srv/scratch/bstrobe1/rare_variant/rare_disease/preprocess/variant_calling/"
+
+# Directory containing visualization of outlier calling
+visualize_outliers_call_dir="/srv/scratch/bstrobe1/rare_variant/rare_disease/preprocess/visualize_outlier_calls/"
 
 
 
@@ -106,6 +114,12 @@ rare_only_outlier_file=$outlier_calling_dir"rare_only__emperical_pvalue.txt"
 # Created by outlier_calling_dm.py.
 # File contains only rare samples. But background distribution was computed from merging gtex whole blood and the rare individuals
 sra_gtex_rare_combined_outlier_file=$outlier_calling_dir"sra_gtex_rare_combined__emperical_pvalue.txt"
+
+# File that contains pli scores for each cluster
+# Created by get_ordered_pli_scores.py
+gtex_rare_combined_pli_score_file=$outlier_calling_dir"gtex_rare_combined_pli_score.txt"
+sra_gtex_rare_combined_pli_score_file=$outlier_calling_dir"sra_gtex_rare_combined_pli_score.txt"
+rare_only_pli_score_file=$outlier_calling_dir"rare_only_pli_score.txt"
 
 
 
@@ -177,13 +191,13 @@ covariate_regression_method="none"
 min_reads_per_individual="5"
 min_individuals_per_gene="50"
 
-if false; then 
+if false; then
 for node_number in $(seq 0 `expr $total_nodes - "1"`); do
     nohup python3 call_outlier_dm.py $gtex_rare_combined_jxn_file $outlier_calling_dir"gtex_rare_combined_" $max_dm_junctions $jxn_filter_method $node_number $total_nodes $covariate_regression_method $min_reads_per_individual $min_individuals_per_gene &> log$node_number &
 done
+python merge_outlier_calling_dm_parrallel_runs.py $outlier_calling_dir"gtex_rare_combined_" $gtex_rare_combined_outlier_file $total_nodes $sample_info_pairing_file
 fi
-
-python merge_outlier_calling_dm_parrallel_runs.py $outlier_calling_dir"gtex_rare_combined_" $gtex_rare_combined_outlier_file
+python get_ordered_pli_scores.py $gtex_rare_combined_jxn_file $gtex_rare_combined_outlier_file $pli_score_file $gencode_gene_annotation_file $gtex_rare_combined_pli_score_file
 
 ###############
 # Run dirichlet multinomial outlier calling on our junction matrices
@@ -215,11 +229,11 @@ total_nodes="10"
 covariate_regression_method="none"
 min_reads_per_individual="5"
 min_individuals_per_gene="30"
-
 if false; then
 for node_number in $(seq 0 `expr $total_nodes - "1"`); do
     nohup python3 call_outlier_dm.py $rare_only_jxn_file $outlier_calling_dir"rare_only_" $max_dm_junctions $jxn_filter_method $node_number $total_nodes $covariate_regression_method $min_reads_per_individual $min_individuals_per_gene &> log_rare_only_$node_number &
 done
+python merge_outlier_calling_dm_parrallel_runs.py $outlier_calling_dir"rare_only_" $rare_only_outlier_file $total_nodes $sample_info_pairing_file
 fi
 
 
@@ -238,4 +252,19 @@ fi
 # Make propper variant calls (need to fill in more)
 if false; then
 sh variant_calling_part_1.sh $cgs_vcf_input_dir $variant_calling_dir $sample_info_pairing_gs_only_file
+fi
+
+
+
+
+
+
+
+
+##########################################################################
+# Visualization
+##########################################################################
+
+if false; then
+Rscript visualize_outlier_calls.R $visualize_outliers_call_dir $gtex_rare_combined_outlier_file $rare_only_outlier_file $sra_gtex_rare_combined_outlier_file $sample_info_pairing_file
 fi
