@@ -62,7 +62,7 @@ def fill_in_rare_disease_jxn_mat_for_one_sample(rare_disease_jxn_mat, sample_num
         line = line.rstrip()
         data = line.split()
         # Extract jxn id for this line
-        chrom_num = data[0].split('+')[0]
+        chrom_num = data[0][:-1]
         jxn_start = str(int(data[1]) - 1) # Rail splice jxn positions and leafcutter splice jxn positions are off by 1
         jxn_end = str(int(data[2]) + 1)
         num_reads = data[4]

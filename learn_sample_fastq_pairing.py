@@ -2,7 +2,8 @@ import numpy as np
 import os
 import sys
 import pdb
-
+#RD083
+#RD079
 
 # This script loops through each file in $fastq_directory to learn mapping from sample name to its two corresponding fastq files
 # Also creates one manifest file (to be used for rail-rna) for each sample. 
@@ -33,6 +34,10 @@ sample_names = {}
 for file_name in os.listdir(fastq_directory):
     # Extract sample name from file
     sample_name = file_name.split('_')[0]
+
+
+    if sample_name == 'RD083' or sample_name == 'RD079':  # Skip these samples as they are outlier samples
+        continue
 
     # If sample_name has not been seen before, initialize it in dictionary
     if sample_name not in sample_names:

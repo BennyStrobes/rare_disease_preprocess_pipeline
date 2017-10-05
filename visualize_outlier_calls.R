@@ -32,11 +32,13 @@ distribution_of_outlier_calls_boxplot <- function(sample_info, pvalue_matrix, ou
     pvalues <- c()
     status <- c() 
     for (sample_num in 1:num_samples) {
+        if (sample_num != 18 & sample_num != 22) {
         full_pval_vec <- pvalue_matrix[,sample_num]
         pval_vec_no_nan <- full_pval_vec[!is.na(full_pval_vec)]
         sample_status <- sample_info$status[sample_num]
         status <- c(status, as.character(rep(sample_status,length(pval_vec_no_nan))))
         pvalues <- c(pvalues, pval_vec_no_nan)
+        }
     }
     df <- data.frame(status = factor(status), pvalues = pvalues)
     box_plot <- ggplot(df, aes(x=status, y=pvalues, fill=status)) + geom_boxplot(notch=TRUE)
@@ -46,8 +48,108 @@ distribution_of_outlier_calls_boxplot <- function(sample_info, pvalue_matrix, ou
 
 }
 
+outlier_vs_pli_score_scatter <- function(sample_info, pvalue_matrix, pli_info, output_file, bgrd_distribution_string) {
+    num_samples <- dim(pvalue_matrix)[2]
+    num_clusters <- dim(pvalue_matrix)[1]
+    max_pli_score <- as.numeric(pli_info$max_pli_score)
+
+
+    pvalues <- c()
+    status <- c()
+    pli_scores <- c()
+
+    for (sample_num in 1:num_samples) {
+        if (sample_num != 18 & sample_num != 22) {
+        full_pval_vec <- pvalue_matrix[,sample_num]
+        valid_indices <- !is.na(full_pval_vec) & !is.na(max_pli_score) & full_pval_vec > 1.5
+        sample_status <- sample_info$status[sample_num]
+
+        pval_vec_valid <- full_pval_vec[valid_indices]
+        pli_scores_valid <- max_pli_score[valid_indices]
+
+        status <- c(status, as.character(rep(sample_status,length(pval_vec_valid))))
+        pvalues <- c(pvalues, pval_vec_valid)
+        pli_scores <- c(pli_scores, pli_scores_valid)
+        }
+    }
+    df <- data.frame(status = factor(status), pvalues = pvalues, pli_scores = pli_scores)
+    # PLOT AWAY
+
+    scatter <- ggplot(df, aes(x = pvalues, y = pli_scores, colour = status)) + geom_point(size=.3) 
+    scatter <- scatter + theme(text = element_text(size=18), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) 
+    scatter <- scatter + labs(colour="status",x = "-log10(pvalue)", y = "pLI score", title = bgrd_distribution_string)
+    ggsave(scatter, file=output_file,width = 15,height=10.5,units="cm")
+}
+
+pli_scores_of_outliers_boxplot <- function(sample_info, pvalue_matrix, pli_info, output_file, bgrd_distribution_string) {
+    num_samples <- dim(pvalue_matrix)[2]
+    num_clusters <- dim(pvalue_matrix)[1]
+    max_pli_score <- as.numeric(pli_info$max_pli_score)
+
+
+    pvalues <- c()
+    status <- c()
+    pli_scores <- c()
+
+    for (sample_num in 1:num_samples) {
+        if (sample_num != 18 & sample_num != 22) {
+        full_pval_vec <- pvalue_matrix[,sample_num]
+        valid_indices <- !is.na(full_pval_vec) & !is.na(max_pli_score) & full_pval_vec > 5.0
+        sample_status <- sample_info$status[sample_num]
+
+        pval_vec_valid <- full_pval_vec[valid_indices]
+        pli_scores_valid <- max_pli_score[valid_indices]
+
+        status <- c(status, as.character(rep(sample_status,length(pval_vec_valid))))
+        pvalues <- c(pvalues, pval_vec_valid)
+        pli_scores <- c(pli_scores, pli_scores_valid)
+        }
+    }
+    df <- data.frame(status = factor(status), pvalues = pvalues, pli_scores = pli_scores)
+    # PLOT AWAY
+    box_plot <- ggplot(df, aes(x=status, y=pli_scores, fill=status)) + geom_violin()
+    box_plot <- box_plot + theme(text = element_text(size=18), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) 
+    box_plot <- box_plot + labs(y = "pLI score",title = bgrd_distribution_string)
+    ggsave(box_plot, file=output_file,width = 15,height=10.5,units="cm")
+
+}
+
+pvalues_of_high_pli_scores_boxplot <- function(sample_info, pvalue_matrix, pli_info, output_file, bgrd_distribution_string) {
+    num_samples <- dim(pvalue_matrix)[2]
+    num_clusters <- dim(pvalue_matrix)[1]
+    max_pli_score <- as.numeric(pli_info$max_pli_score)
+
+
+    pvalues <- c()
+    status <- c()
+    pli_scores <- c()
+
+    for (sample_num in 1:num_samples) {
+        if (sample_num != 18 & sample_num != 22) {
+        full_pval_vec <- pvalue_matrix[,sample_num]
+        valid_indices <- !is.na(full_pval_vec) & !is.na(max_pli_score) & max_pli_score > .9 & full_pval_vec > 3.5
+        sample_status <- sample_info$status[sample_num]
+
+        pval_vec_valid <- full_pval_vec[valid_indices]
+        pli_scores_valid <- max_pli_score[valid_indices]
+
+        status <- c(status, as.character(rep(sample_status,length(pval_vec_valid))))
+        pvalues <- c(pvalues, pval_vec_valid)
+        pli_scores <- c(pli_scores, pli_scores_valid)
+        }
+    }
+    df <- data.frame(status = factor(status), pvalues = pvalues, pli_scores = pli_scores)
+    # PLOT AWAY
+    box_plot <- ggplot(df, aes(x=status, y=pvalues, fill=status)) + geom_violin()
+    box_plot <- box_plot + theme(text = element_text(size=18), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) 
+    box_plot <- box_plot + labs(y = "-log10(pvalue)",title = bgrd_distribution_string)
+    ggsave(box_plot, file=output_file,width = 15,height=10.5,units="cm")
+
+}
+
+
 # Wrapper to make a bunch of plots related to outlier levels
-outlier_plotting_wrapper <- function(sample_info, pvalue_matrix, output_root, bgrd_distribution_string) {
+outlier_plotting_wrapper <- function(sample_info, pvalue_matrix, pli_info, output_root, bgrd_distribution_string) {
     # Make plot showing number of outlier calls greater than a certain shreshold
     threshold <- 3.3
     number_of_outlier_calls_per_sample_boxplot(sample_info, pvalue_matrix, paste0(output_root, "number_of_outlier_calls_per_sample_boxplot_",threshold,".png"), threshold, bgrd_distribution_string)
@@ -56,12 +158,18 @@ outlier_plotting_wrapper <- function(sample_info, pvalue_matrix, output_root, bg
 
     distribution_of_outlier_calls_boxplot(sample_info, pvalue_matrix, paste0(output_root, "distribution_of_outlier_calls_boxplot.png"), bgrd_distribution_string)
 
+    outlier_vs_pli_score_scatter(sample_info, pvalue_matrix, pli_info, paste0(output_root,"outlier_vs_pli_score_scatter.png"), bgrd_distribution_string)
+
+    pli_scores_of_outliers_boxplot(sample_info, pvalue_matrix, pli_info, paste0(output_root,"pli_scores_of_outliers_boxplot.png"), bgrd_distribution_string)
+
+    pvalues_of_high_pli_scores_boxplot(sample_info,pvalue_matrix,pli_info, paste0(output_root,"pvalues_of_pli_scores_boxplot.png"), bgrd_distribution_string)
 }
 
 
 
 
 
+options(warn=1)
 #####################################
 # Load in data
 #####################################
@@ -70,6 +178,10 @@ gtex_rare_combined_outlier_file = args[2]  # Outlier calls for rare samples when
 rare_only_outlier_file = args[3]  # Outlier calls for rare samples when background is rare samples
 sra_gtex_rare_combined_outlier_file = args[4]  # Outlier calls for rare samples when background is gtex whole blood, sra, and rare samples
 sample_info_file = args[5]  # File containing case control status of samples
+gtex_rare_combined_pli_score_file  = args[6]  # File containing pli scores for each cluster
+rare_only_pli_score_file = args[7]
+sra_gtex_rare_combined_pli_score_file = args[8]
+
 
 # Load in sample info
 sample_info <- read.table(sample_info_file)
@@ -79,10 +191,17 @@ colnames(sample_info) <- c("sample_id","institution_id","status")
 # Load in pvalue matrices
 rare_only_pvalue <- load_in_outlier_file(rare_only_outlier_file)
 gtex_rare_pvalue <- load_in_outlier_file(gtex_rare_combined_outlier_file)
+sra_gtex_rare_pvalue <- load_in_outlier_file(sra_gtex_rare_combined_outlier_file)
+
+# Load in pli score files
+gtex_rare_pli <- read.table(gtex_rare_combined_pli_score_file, header=TRUE)
+rare_pli <- read.table(rare_only_pli_score_file, header=TRUE)
+sra_gtex_rare_pli <- read.table(sra_gtex_rare_combined_pli_score_file,header=TRUE)
 
 # For rare only
-outlier_plotting_wrapper(sample_info, rare_only_pvalue, paste0(output_dir,"bgrd_rare_only_"), "background distr. = rare samples")
-outlier_plotting_wrapper(sample_info, gtex_rare_pvalue, paste0(output_dir,"bgrd_gtex_rare_"), "background distr. = gtex & rare samples")
+outlier_plotting_wrapper(sample_info, rare_only_pvalue, rare_pli, paste0(output_dir,"bgrd_rare_only_"), "background distr. = rare samples")
+outlier_plotting_wrapper(sample_info, gtex_rare_pvalue, gtex_rare_pli, paste0(output_dir,"bgrd_gtex_rare_"), "background distr. = gtex & rare samples")
+outlier_plotting_wrapper(sample_info, sra_gtex_rare_pvalue, sra_gtex_rare_pli, paste0(output_dir,"bgrd_sra_gtex_rare_"), "background distr. = sra & gtex & rare samples")
 
 
 
