@@ -97,7 +97,7 @@ visualize_outliers_call_dir="/srv/scratch/bstrobe1/rare_variant/rare_disease/pre
 # Directory containing quantification and results of enrichment of rare variants within splicing outlier calls
 variant_outlier_enrichment_dir="/srv/scratch/bstrobe1/rare_variant/rare_disease/preprocess/variant_outlier_enrichment/"
 
-# Directory pre-processed data related to genomic annotations
+# Directory containing pre-processed data related to genomic annotations
 genomic_annotation_data_dir="/srv/scratch/bstrobe1/rare_variant/rare_disease/preprocess/genomic_annotation_data/"
 
 # Directory containing genomic annotations for all variants in each individual
@@ -140,6 +140,11 @@ sra_gtex_rare_combined_outlier_file=$outlier_calling_dir"sra_gtex_rare_combined_
 gtex_rare_combined_pli_score_file=$outlier_calling_dir"gtex_rare_combined_pli_score.txt"
 sra_gtex_rare_combined_pli_score_file=$outlier_calling_dir"sra_gtex_rare_combined_pli_score.txt"
 rare_only_pli_score_file=$outlier_calling_dir"rare_only_pli_score.txt"
+
+# File created by variant_calling_part_1.sh
+# vcf file containing all variants 
+# Indels were removed and so were variants on non-autosomal chromosomes
+processed_vcf_file=$variant_calling_dir"merge_sample_names_SNPs.recode.vcf"
 
 
 # File created by variant_calling_part_1.sh
@@ -329,4 +334,9 @@ fi
 ##########################################################################
 # Feature generation
 ##########################################################################
+
+
+sh feature_extraction_driver.sh $genomic_annotation_data_dir $individual_annotation_dir $genomic_anno_dann_input $genomic_anno_vep_vcf_input $genomic_anno_chrom_hmm_input $genomic_anno_cadd_input $genomic_anno_phylop_dir $genomic_anno_phylop_suffix $gencode_gene_annotation_file $variant_bed_file $processed_vcf_file
+
+
 
